@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nappo Raffale</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#27ae60">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gestione Casa">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="stylesheet" href="style.css?v=81">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-layout">
+
+        <!-- SIDEBAR (Desktop Only) -->
+        <aside class="sidebar desktop-only-flex">
+            <header class="app-header">
+                <div class="brand">
+                    <div class="brand-icon"><i class="fas fa-wallet"></i></div>
+                    <h1>Nappo Raffale</h1>
+                </div>
+            </header>
+
+            <nav class="sidebar-nav">
+                <button class="nav-btn active" data-tab="transactions"><i class="fas fa-list-ul"></i>
+                    Transazioni</button>
+                <button class="nav-btn" data-tab="accounts"><i class="fas fa-university"></i> Conti</button>
+                <button class="nav-btn" data-tab="categories"><i class="fas fa-tags"></i> Categorie</button>
+                <button class="nav-btn" data-tab="budget"><i class="fas fa-chart-pie"></i> Budget</button>
+                <button class="nav-btn" data-tab="recurring"><i class="fas fa-calendar-check"></i> Ricorrenti</button>
+                <button class="nav-btn" data-tab="grafici"><i class="fas fa-chart-line"></i> Grafici</button>
+                <button class="nav-btn" data-tab="alloggi"><i class="fas fa-home"></i> Alloggi</button>
+                <button class="nav-btn" data-tab="savings" style="color: #2ecc71; font-weight: 600;"><i
+                        class="fas fa-shield-halved"></i> Risparmi</button>
+                <button class="nav-btn" data-tab="settings"><i class="fas fa-cog"></i> Impostazioni</button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- HEADER (Mobile & Desktop) -->
+            <header class="top-bar senior-summary-bar">
+                <div class="summary-left">
+                    <div class="main-balance">
+                        <span class="label">SALDO TOTALE</span>
+                        <h3 id="total-balance">0,00 €</h3>
+                    </div>
+                    <div id="top-budget-residue-container" class="budget-residue-mini">
+                        <!-- Budget progress injected here -->
+                    </div>
+                </div>
+                <div class="summary-right">
+                    <div class="summary-item income">
+                        <span>ENTRATE</span>
+                        <strong id="total-income">0,00 €</strong>
+                    </div>
+                    <div class="summary-item expense">
+                        <span>USCITE</span>
+                        <strong id="total-expense">0,00 €</strong>
+                    </div>
+                    <div class="summary-item planned desktop-only">
+                        <span>PREVISTE</span>
+                        <strong id="total-planned">0,00 €</strong>
+                    </div>
+                    <!-- MOBILE FILTER TOGGLE -->
+                    <button id="mobile-filter-toggle" class="mobile-only-flex icon-btn filter-toggle">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEWS BODY WRAPPER -->
+            <div class="main-body-wrapper">
+                <div id="views-main-area" class="views-container">
+
+                    <!-- VIEW: TIMELINE (Default) -->
+                    <div id="view-transactions" class="view-section active">
+                        <!-- 1. ACCOUNTS ROW (Horizontal) -->
+                        <div id="top-accounts-row" class="accounts-horizontal-row">
+                            <!-- Accounts cards injected here -->
+                        </div>
+
+                        <!-- 2. TRANSACTION LIST -->
+                        <div id="timeline-list" class="timeline-list senior-list">
+                            <!-- Transactions grouped by date injected here -->
+                        </div>
+                    </div> <!-- End #view-transactions -->
+
+                    <!-- VIEW: ACCOUNTS -->
+                    <div id="view-accounts" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>I Tuoi Conti</h3>
+                            <button id="add-account-btn" class="icon-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <ul id="accounts-full-list" class="styled-list">
+                            <!-- Accounts injected here -->
+                        </ul>
+                    </div>
+
+                    <!-- VIEW: CATEGORIES -->
+                    <div id="view-categories" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>Gestione Categorie</h3>
+                            <button id="add-group-btn" class="icon-btn" title="Aggiungi Categoria Principale"><i
+                                    class="fas fa-folder-plus"></i></button>
+                        </div>
+                        <div id="categories-full-list" class="styled-list">
+                            <!-- Categories injected here -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW: BUDGET -->
+                    <div id="view-budget" class="view-section hidden">
+                        <div class="section-header" style="justify-content: space-between;">
+                            <h3>Gestione Budget</h3>
+                            <button
+                                onclick="document.getElementById('modal-budget-settings').classList.remove('hidden')"
+                                class="icon-btn" title="Impostazioni Budget"><i class="fas fa-cog"></i></button>
+                        </div>
+
+                        <div id="current-budget-card" style="margin-bottom: 20px;">
+                            <!-- Progress bar and current period status injected here -->
+                        </div>
+
+                        <div class="section-header" style="margin-top:20px;">
+                            <h3>Lista Gestioni Budget</h3>
+                        </div>
+                        <div id="budget-list-container" class="styled-list" style="margin-bottom:20px;">
+                            <!-- Saved definitions list -->
+                        </div>
+
+                        <div class="section-header">
+                            <h3>Storico Periodi</h3>
+                        </div>
+                        <div id="budget-history-list" class="styled-list">
+                            <!-- Past budget periods injected here -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW: RECURRING -->
+                    <div id="view-recurring" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>Spese Ricorrenti</h3>
+                            <button id="add-recurring-btn" class="icon-btn"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="recurring-list" class="styled-list">
+                            <!-- Recurring items -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW: GRAFICI -->
+                    <div id="view-grafici" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>Grafici e Statistiche</h3>
+                        </div>
+
+                        <!-- Summary Stats -->
+                        <div id="stats-summary" class="stats-header">
+                            <!-- Cards injected by JS: Entrate, Uscite, Risparmio -->
+                        </div>
+
+                        <!-- Monthly Trend Vertical -->
+                        <div class="trend-container">
+                            <div class="chart-header">
+                                <h3>Andamento Mensile</h3>
+                                <div style="display: flex; gap: 15px; font-size: 1.2rem;">
+                                    <span style="display: flex; align-items: center; gap: 5px;">
+                                        <div
+                                            style="width: 10px; height: 10px; background: #22c55e; border-radius: 2px;">
+                                        </div>
+                                        Entrate
+                                    </span>
+                                    <span style="display: flex; align-items: center; gap: 5px;">
+                                        <div
+                                            style="width: 10px; height: 10px; background: #ef4444; border-radius: 2px;">
+                                        </div>
+                                        Uscite
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="trend-chart" class="bars-wrapper">
+                                <!-- Vertical bars injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Category Pie Chart Section -->
+                        <div class="pie-section">
+                            <div class="pie-chart-wrapper">
+                                <div id="category-pie" class="pie-chart-donut"></div>
+                            </div>
+                            <div id="category-chart" class="pie-legend">
+                                <!-- Legend and breakdown injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: ALLOGGI -->
+                    <div id="view-alloggi" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>Gestione Alloggi</h3>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="window.openCleanupManager()" class="icon-btn"
+                                    style="background:#f1f5f9; color:#64748b;" title="Bonifica Movimenti Alloggi"><i
+                                        class="fas fa-magic"></i></button>
+                                <button id="add-contract-btn" class="icon-btn" title="Nuovo Contratto"><i
+                                        class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        <div id="properties-list" class="styled-list">
+                            <!-- Properties injected here -->
+                        </div>
+                    </div>
+
+                    <!-- VIEW: SAVINGS (Cassetto Risparmi) -->
+                    <div id="view-savings" class="view-section hidden">
+                        <div class="section-header">
+                            <h3><i class="fas fa-shield-halved"></i> Cassetto Risparmi</h3>
+                        </div>
+
+                        <div class="savings-container">
+                            <!-- Reassuring Message Card -->
+                            <div class="savings-hero-card">
+                                <div class="hero-icon"><i class="fas fa-leaf"></i></div>
+                                <div class="hero-text">
+                                    <h2 id="savings-total">0,00 €</h2>
+                                    <p id="savings-message">Stai costruendo la tua tranquillità. Ogni piccolo passo
+                                        conta!</p>
+                                </div>
+                            </div>
+
+                            <!-- Progress Goals -->
+                            <div class="savings-goals-section">
+                                <div class="goal-card">
+                                    <div class="goal-info">
+                                        <span>Obiettivo Base (3 mesi)</span>
+                                        <strong id="goal-base-val">0 / 2.500 €</strong>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div id="progress-base" class="progress-bar-fill" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="goal-card">
+                                    <div class="goal-info">
+                                        <span>Obiettivo Ideale (6 mesi)</span>
+                                        <strong id="goal-ideal-val">0 / 5.000 €</strong>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div id="progress-ideal" class="progress-bar-fill ideal" style="width: 0%;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Projection/Simulation -->
+                            <div class="savings-projection-card">
+                                <h4><i class="fas fa-wand-magic-sparkles"></i> Proiezione Crescita</h4>
+                                <p id="savings-projection-text">Con 150€ al mese, raggiungerai il prossimo obiettivo tra
+                                    circa -- mesi.</p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="savings-actions">
+                                <button id="add-savings-btn" class="btn-action primary">
+                                    <i class="fas fa-plus-circle"></i> Aggiungi al Fondo
+                                </button>
+                                <button id="withdraw-savings-btn" class="btn-action warning">
+                                    <i class="fas fa-hand-holding-medical"></i> Preleva (Emergenza)
+                                </button>
+                            </div>
+
+                            <!-- History -->
+                            <div class="section-header" style="margin-top: 30px;">
+                                <h3>Storico Accantonamenti</h3>
+                            </div>
+                            <div id="savings-history-list" class="styled-list">
+                                <!-- Savings transactions injected here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW: SETTINGS & BACKUP -->
+                    <div id="view-settings" class="view-section hidden">
+                        <div class="section-header">
+                            <h3>Impostazioni e Backup</h3>
+                        </div>
+                        <div class="settings-container" style="display: grid; gap: 20px; padding: 10px;">
+                            <div class="card"
+                                style="padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <h4 style="margin-bottom: 15px;"><i class="fas fa-database"
+                                        style="color: var(--primary-color); margin-right: 10px;"></i> Backup dei Dati
+                                </h4>
+                                <p style="font-size: 1.3rem; color: #666; margin-bottom: 20px;">Esporta tutti i tuoi
+                                    dati
+                                    (transazioni, conti, alloggi, ecc.) in un file JSON sicuro che potrai scaricare e
+                                    conservare.</p>
+                                <button id="export-backup-btn" class="btn-save"
+                                    style="margin: 0; background: #3498db;"><i class="fas fa-download"></i> SCARICA
+                                    BACKUP</button>
+                            </div>
+
+                            <div class="card"
+                                style="padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                <h4 style="margin-bottom: 15px;"><i class="fas fa-file-import"
+                                        style="color: #e67e22; margin-right: 10px;"></i> Ripristino Dati</h4>
+                                <p style="font-size: 1.3rem; color: #666; margin-bottom: 20px;">Carica un file di backup
+                                    precedentemente salvato. <strong>Attenzione:</strong> questa operazione
+                                    sovrascriverà tutti
+                                    i dati attuali nel browser.</p>
+                                <button id="import-backup-trigger" class="btn-save"
+                                    style="margin: 0; background: #e67e22;"><i class="fas fa-upload"></i> RIPRISTINA DA
+                                    FILE</button>
+                                <input type="file" id="import-backup-file" accept=".json" style="display: none;">
+                            </div>
+
+                            <div class="card"
+                                style="padding: 20px; background: #fffcf0; border: 1px solid #fef3c7; border-radius: 12px; margin-top: 20px;">
+                                <h4 style="margin-bottom: 15px; color:#b45309;"><i class="fas fa-history"
+                                        style="margin-right: 10px;"></i> Pulizia Dati Storici (2025)</h4>
+                                <p style="font-size: 1.3rem; color: #92400e; margin-bottom: 20px;">Rimuove
+                                    definitivamente
+                                    tutte le transazioni antecedenti al 01/01/2026. Usa questa opzione per eliminare i
+                                    dati
+                                    di prova residui che sporcano i grafici.</p>
+                                <button onclick="UI.purgeOldData()" class="btn-save"
+                                    style="margin: 0; background: #d97706;"><i class="fas fa-trash-alt"></i> ELIMINA
+                                    DATI
+                                    PRE-2026</button>
+                            </div>
+
+                            <div class="card"
+                                style="padding: 20px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px;">
+                                <h4 style="margin-bottom: 15px; color:#be123c;"><i class="fas fa-eraser"
+                                        style="margin-right: 10px;"></i> Bonifica Logica Alloggi</h4>
+                                <p style="font-size: 1.3rem; color: #9f1239; margin-bottom: 20px;">Utilizza questo
+                                    strumento per
+                                    identificificare ed eliminare chirurgicamente solo le transazioni di prova o i
+                                    duplicati
+                                    generati dalla sezione Alloggi.</p>
+                                <button onclick="window.openCleanupManager()" class="btn-save"
+                                    style="margin: 0; background: #be123c;"><i class="fas fa-magic"></i> AVVIA BONIFICA
+                                    DATI</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- End #views-main-area -->
+
+                <!-- SHARED FILTERS SIDEBAR / MOBILE DRAWER -->
+                <div id="filters-drawer" class="filters-drawer-overlay hidden">
+                    <aside class="filters-sidebar">
+                        <div class="filters-header">
+                            <h4><i class="fas fa-filter"></i> Filtri</h4>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="reset-filters-btn" class="btn-reset" title="Reset Filtri">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                <button id="close-filters-btn" class="mobile-only icon-btn close-drawer">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Filter -->
+                        <div class="filter-section">
+                            <label class="filter-label">
+                                <i class="fas fa-search"></i> Cerca
+                            </label>
+                            <input type="text" id="filter-search" class="filter-input-text"
+                                placeholder="Cerca movimenti..."
+                                style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                        </div>
+
+                        <!-- Date Range Filter -->
+                        <div class="filter-section">
+                            <label class="filter-label">
+                                <i class="fas fa-calendar-alt"></i> Periodo
+                            </label>
+                            <div class="date-range-inputs">
+                                <input type="date" id="filter-date-start" placeholder="Data inizio">
+                                <span class="date-separator">→</span>
+                                <input type="date" id="filter-date-end" placeholder="Data fine">
+                            </div>
+                        </div>
+
+                        <!-- Categories Dropdown Filter -->
+                        <div class="filter-section">
+                            <label class="filter-label">
+                                <i class="fas fa-tags"></i> Categoria
+                            </label>
+                            <select id="filter-category" class="filter-select">
+                                <option value="all">Tutte le categorie</option>
+                                <!-- Categories injected via JS -->
+                            </select>
+                        </div>
+
+                        <!-- Account Filter -->
+                        <div class="filter-section">
+                            <label class="filter-label">
+                                <i class="fas fa-wallet"></i> Conto
+                            </label>
+                            <select id="filter-account" class="filter-select">
+                                <option value="all">Tutti i conti</option>
+                                <!-- Injected via JS -->
+                            </select>
+                        </div>
+
+                        <!-- Category Report Button -->
+                        <div class="filter-section">
+                            <button id="show-category-report-btn" class="btn-report">
+                                <i class="fas fa-chart-bar"></i> Report Categorie
+                            </button>
+                        </div>
+
+                        <!-- CSV Export Button -->
+                        <div class="filter-section" style="margin-top: 10px;">
+                            <button id="export-csv-btn" class="btn-report"
+                                style="background: linear-gradient(135deg, #3498db, #2980b9); box-shadow: 0 2px 6px rgba(52, 152, 219, 0.2);">
+                                <i class="fas fa-file-csv"></i> Esporta Excel
+                            </button>
+                        </div>
+                    </aside>
+                </div>
+            </div> <!-- End .main-body-wrapper -->
+    </div>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION (Mobile Only) -->
+    <nav class="bottom-nav mobile-only">
+        <button class="nav-item active" onclick="switchTab('transactions')">
+            <i class="fas fa-wallet"></i>
+            <span>Transaz.</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('grafici')">
+            <i class="fas fa-chart-line"></i>
+            <span>Grafici</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('alloggi')">
+            <i class="fas fa-home"></i>
+            <span>Alloggi</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('savings')">
+            <i class="fas fa-shield-halved"></i>
+            <span>Risparmi</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('categories')">
+            <i class="fas fa-tags"></i>
+            <span>Categ.</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('accounts')">
+            <i class="fas fa-university"></i>
+            <span>Conti</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')">
+            <i class="fas fa-cog"></i>
+            <span>Impostaz.</span>
+        </button>
+    </nav>
+
+    <!-- FAB (Add Transaction) -->
+    <button id="add-btn" class="fab">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    </div>
+    <!-- END APP LAYOUT -->
+
+    <!-- ADD TRANSACTION MODAL -->
+    <div id="modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Aggiungi</h2>
+                <button id="close-modal-btn" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="transaction-form">
+                <!-- Amount Input (Big) -->
+                <div class="amount-input-wrapper">
+                    <span class="currency">€</span>
+                    <input type="number" id="amount" placeholder="0" step="0.01" required>
+                </div>
+
+                <!-- Category Selector (Searchable) -->
+                <div class="form-row" id="category-row">
+                    <div class="icon-placeholder" id="selected-cat-icon-wrapper"><i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="input-data" style="position:relative;">
+                        <label>Categoria</label>
+                        <div id="category-search-container" class="search-select-container">
+                            <input type="text" id="category-search" placeholder="Cerca categoria..."
+                                style="width:100%; border:none; border-bottom:1px solid #eee; padding:5px 0; font-family:inherit; font-size: 1.2rem; outline:none;">
+                            <div id="category-dropdown" class="search-dropdown hidden"></div>
+                            <input type="hidden" id="category" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-align-left"></i></div>
+                    <div class="input-data">
+                        <label>Note</label>
+                        <input type="text" id="description" placeholder="Aggiungi nota">
+                    </div>
+                </div>
+
+                <!-- Date & Account -->
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="input-data">
+                        <label>Data</label>
+                        <input type="date" id="date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-wallet"></i></div>
+                    <div class="input-data">
+                        <label>Conto</label>
+                        <select id="account-id" required></select>
+                    </div>
+                </div>
+
+                <!-- Type Toggle (Hidden logic primarily, styled as Tabs) -->
+                <div class="type-tabs">
+                    <div class="type-tab expense active" data-type="expense">Uscita</div>
+                    <div class="type-tab income" data-type="income">Entrata</div>
+                    <div class="type-tab transfer" data-type="transfer">Trasferim.</div>
+                </div>
+
+                <!-- Hidden To Account for Transfer -->
+                <div class="form-row hidden" id="to-account-row">
+                    <div class="icon-placeholder"><i class="fas fa-arrow-right"></i></div>
+                    <div class="input-data">
+                        <label>Verso Conto</label>
+                        <select id="to-account-id"></select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">SALVA</button>
+                <input type="hidden" id="selected-type" value="expense">
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-icon-picker" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Nuova Categoria</h2>
+                <button id="close-icon-picker" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="picker-content" style="padding:20px; overflow-y:auto; flex:1;">
+                <div class="form-group">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Nome Categoria</label>
+                    <input type="text" id="new-cat-name" placeholder="Es. Palestra"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size: 1.2rem;">
+                </div>
+
+                <div class="form-group" id="initial-balance-row" style="margin-top: 15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Saldo Iniziale (€)</label>
+                    <input type="number" id="initial-balance" placeholder="0.00" step="0.01"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size: 1.2rem;">
+                </div>
+
+                <label style="display:block; margin:15px 0 10px; font-weight:600;">Scegli Icona</label>
+                <div class="icons-grid" id="icons-grid"
+                    style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;">
+                    <!-- Icons injected here -->
+                </div>
+
+                <input type="hidden" id="target-group-id">
+            </div>
+
+            <!-- Fixed Footer -->
+            <div class="modal-footer" style="padding:20px; border-top:1px solid #eee; background:white;">
+                <button id="confirm-add-cat" class="btn-save" style="margin-top:0;">SALVA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-recurring" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-rec-title">Nuova Ricorrenza (v80)</h2>
+                <button id="close-modal-rec" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="recurring-form">
+                <!-- Amount Input (Big) -->
+                <div class="amount-input-wrapper">
+                    <span class="currency">€</span>
+                    <input type="number" id="rec-amount" placeholder="0" step="0.01" required>
+                </div>
+
+                <!-- Category Selector (Searchable) -->
+                <div class="form-row" id="rec-category-row">
+                    <div class="icon-placeholder" id="rec-selected-cat-icon-wrapper"><i
+                            class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="input-data" style="position:relative;">
+                        <label>Categoria</label>
+                        <div id="rec-category-search-container" class="search-select-container">
+                            <input type="text" id="rec-category-search" placeholder="Cerca categoria..."
+                                style="width:100%; border:none; border-bottom:1px solid #eee; padding:5px 0; font-family:inherit; font-size: 1.2rem; outline:none;">
+                            <div id="rec-category-dropdown" class="search-dropdown hidden"></div>
+                            <input type="hidden" id="rec-category" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-align-left"></i></div>
+                    <div class="input-data">
+                        <label>Note</label>
+                        <input type="text" id="rec-description" placeholder="Es. Affitto">
+                    </div>
+                </div>
+
+                <!-- Date & Account -->
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="input-data">
+                        <label>Prima Scadenza</label>
+                        <input type="date" id="rec-date" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-wallet"></i></div>
+                    <div class="input-data">
+                        <label>Conto</label>
+                        <select id="rec-account-id" required></select>
+                    </div>
+                </div>
+
+                <!-- Repeat Toggle -->
+                <div class="form-row" style="margin-top: 10px;">
+                    <div class="icon-placeholder"><i class="fas fa-redo"></i></div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="rec-repeat" style="width: auto;" checked>
+                        <label for="rec-repeat" style="font-weight: 600; cursor: pointer;">Ripeti ogni mese</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">SALVA</button>
+                <input type="hidden" id="rec-id">
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-budget-settings" class="modal-overlay hidden">
+        <div class="modal" style="height:auto; max-height:80vh;">
+            <div class="modal-header">
+                <h2>Impostazioni Budget</h2>
+                <button id="close-budget-settings" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding:20px;">
+                <p style="margin-bottom:20px; color:#666; font-size: 1.3rem;">Definisci i tuoi periodi di budget. L'app
+                    userà quello corrispondente alla data odierna.</p>
+
+                <input type="hidden" id="budget-id">
+
+                <div class="form-group" style="margin-bottom:20px; display:flex; gap:15px;">
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Inizio Periodo</label>
+                        <input type="date" id="budget-start-date"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:white; font-family:inherit;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Fine Periodo</label>
+                        <input type="date" id="budget-end-date"
+                            style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:white; font-family:inherit;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:10px; font-weight:600;">Budget per Categoria</label>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <select id="budget-cat-select"
+                            style="flex:1; padding:8px; border:1px solid #ddd; border-radius:8px; background:white;">
+                            <!-- Categories injected here -->
+                        </select>
+                        <input type="number" id="budget-cat-amount" placeholder="0.00"
+                            style="width:100px; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                        <button type="button" id="add-cat-budget-btn" class="btn-save"
+                            style="margin:0; width:auto; padding:0 15px;"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div id="budget-cat-list"
+                        style="max-height:150px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:10px; background:#f9f9f9;">
+                        <!-- List of category budgets -->
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Importo Totale Budget (€)</label>
+                    <input type="number" id="budget-total-amount" placeholder="0.00" step="0.01"
+                        style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size: 1.3rem; font-weight:bold;">
+                    <small style="color:#999;">Il budget totale deve essere >= alla somma dei budget categoria.</small>
+                </div>
+
+                <button id="save-budget-settings" class="btn-save" style="margin-top:10px;">SALVA E APPLICA</button>
+
+            </div>
+        </div>
+    </div>
+    <!-- MODAL: ARREARS MANAGEMENT -->
+    <div id="modal-arrears" class="modal-overlay hidden">
+        <div class="modal" style="max-height:90vh; display:flex; flex-direction:column;">
+            <div class="modal-header">
+                <h4 id="rent-ledger-title" style="margin:0;">Storico Inquilino</h4>
+                <button id="close-modal-arrears" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding:20px; overflow-y:auto; flex:1;">
+                <p style="font-size: 1.3rem; margin-bottom:20px;">
+                    Residuo Totale: <strong id="rent-total-arrears" style="color:#e67e22;">€0.00</strong>
+                </p>
+
+                <!-- Storico Canoni e Pagamenti (Vista Derivata) -->
+                <div id="rent-ledger-list"
+                    style="margin-bottom:25px; max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:8px;">
+                    <!-- Ledger items (dues + allocations) injected here -->
+                </div>
+
+                <!-- Form Aggiungi Canone Dovuto (Debito) -->
+                <div style="background:#f1f5f9; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+                    <h5 style="margin:0 0 15px 0; color:#475569;"><i class="fas fa-file-invoice-dollar"></i> Aggiungi
+                        Canone Dovuto</h5>
+                    <form id="due-form">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div class="input-data">
+                                <label>Mese Rif. (YYYY-MM)</label>
+                                <input type="month" id="due-month" required>
+                            </div>
+                            <div class="input-data">
+                                <label>Importo Dovuto (€)</label>
+                                <input type="number" id="due-amount" step="0.01" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-save" style="margin-top:10px; background:#475569;">SALVA
+                            DEBITO</button>
+                        <input type="hidden" id="due-contract-id">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PROPERTY MANAGEMENT -->
+    <div id="modal-property" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-contract-title">Nuovo Contratto Affitto</h2>
+                <button id="close-modal-contract" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="contract-form">
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-home"></i></div>
+                    <div class="input-data">
+                        <label>Nome Alloggio</label>
+                        <input type="text" id="contract-prop-name" placeholder="Es. Via Roma 12" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-user-tie"></i></div>
+                    <div class="input-data">
+                        <label>Nome Inquilino</label>
+                        <input type="text" id="contract-tenant-name" placeholder="Es. Mario Rossi" required>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding: 0 50px;">
+                    <div class="input-data">
+                        <label>Canone Mensile (€)</label>
+                        <input type="number" id="contract-rent" step="0.01" required>
+                    </div>
+                    <div class="input-data">
+                        <label>Tipo Contratto</label>
+                        <select id="contract-type">
+                            <option value="cedolare">Cedolare Secca</option>
+                            <option value="ordinario">Ordinario</option>
+                            <option value="altro">Altro</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding: 15px 50px;">
+                    <div class="input-data">
+                        <label>Data Inizio</label>
+                        <input type="date" id="contract-start" required>
+                    </div>
+                    <div class="input-data">
+                        <label>Data Fine (Opz.)</label>
+                        <input type="date" id="contract-end">
+                    </div>
+                </div>
+                <button type="submit" class="btn-save">SALVA CONTRATTO</button>
+                <input type="hidden" id="contract-id">
+            </form>
+        </div>
+    </div>
+    <!-- MODAL: PAY RENT -->
+    <div id="modal-pay-rent" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Registra Affitto</h2>
+                <button id="close-modal-rent" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="pay-rent-form">
+                <div class="amount-input-wrapper">
+                    <span class="currency">€</span>
+                    <input type="number" id="rent-amount" placeholder="0" step="0.01" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-calendar-check"></i></div>
+                    <div class="input-data">
+                        <label>Data Incasso (Reale)</label>
+                        <input type="date" id="rent-date-paid" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="input-data">
+                        <label>Mese di Riferimento</label>
+                        <input type="date" id="rent-date-ref" required>
+                        <small style="color:#666; font-size:0.75rem;">Seleziona un giorno del mese di riferimento
+                            (es. 1° Gennaio)</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-wallet"></i></div>
+                    <div class="input-data">
+                        <label>Versato su Conto</label>
+                        <select id="rent-account-id" required></select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="icon-placeholder"><i class="fas fa-align-left"></i></div>
+                    <div class="input-data">
+                        <label>Note Opzionali</label>
+                        <textarea id="rent-notes" rows="2" placeholder="Es. Saldo parziale..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Toggle for Global Accounting -->
+                <div class="form-row"
+                    style="background:#f8f9fa; border-radius:8px; padding:10px; margin-top:10px; border:1px solid #eee;">
+                    <div style="display:flex; align-items:center; width:100%;">
+                        <input type="checkbox" id="rent-is-accounting" checked
+                            style="width:20px; height:20px; margin-right:10px; accent-color:var(--primary-color);">
+                        <label for="rent-is-accounting"
+                            style="margin:0; font-size:0.9rem; cursor:pointer; color:#333; font-weight:600;">Registra in
+                            Contabilità Globale</label>
+                    </div>
+                    <p style="font-size:0.75rem; color:#666; margin:5px 0 0 30px;">Se attivo, il pagamento aggiornerà
+                        anche il saldo dei conti (Banca/Contanti).</p>
+                </div>
+
+                <button type="submit" class="btn-save" style="background:#27ae60; margin-top:15px;">REGISTRA
+                    PAGAMENTO</button>
+                <input type="hidden" id="rent-property-id">
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CATEGORY REPORT -->
+    <div id="modal-category-report" class="modal-overlay hidden">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-bar"></i> Report Categorie</h2>
+                <button id="close-category-report" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <div id="category-report-container" class="report-container">
+                    <!-- Category totals injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js?v=80"></script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered!', reg))
+                    .catch(err => console.log('SW Registration failed:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>

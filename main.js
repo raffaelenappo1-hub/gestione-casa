@@ -19,11 +19,13 @@ window.switchTab = function (id) {
         if (btn.getAttribute('onclick')?.includes(`'${id}'`)) btn.classList.add('active');
     });
 
-    // Close mobile filter drawer on tab switch
-    const drawer = document.getElementById('filters-drawer');
-    if (drawer) drawer.classList.add('hidden');
-    const toggleBtn = document.getElementById('mobile-filter-toggle');
-    if (toggleBtn) toggleBtn.classList.remove('active');
+    // Close mobile filter drawer on tab switch (only on mobile)
+    if (window.innerWidth < 1025) {
+        const drawer = document.getElementById('filters-drawer');
+        if (drawer) drawer.classList.add('hidden');
+        const toggleBtn = document.getElementById('mobile-filter-toggle');
+        if (toggleBtn) toggleBtn.classList.remove('active');
+    }
 
     if (window.UI_REFRESH) window.UI_REFRESH();
 };
@@ -606,6 +608,49 @@ document.addEventListener('DOMContentLoaded', () => {
             const parts = val.toFixed(2).split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             return `${parts.join(',')} €`;
+        },
+
+        // Get filtered transactions based on all filters
+        getFilteredTransactions() {
+            let trxs = [...Store.data.transactions];
+
+            // Search text filter
+            const searchText = document.getElementById('filter-search')?.value.toLowerCase().trim();
+            if (searchText) {
+                trxs = trxs.filter(t => {
+                    const desc = (t.description || '').toLowerCase();
+                    const amt = t.amount.toString();
+                    const cat = Store.data.categories.find(c => c.id === t.category);
+                    const catName = cat ? cat.name.toLowerCase() : '';
+
+                    return desc.includes(searchText) || amt.includes(searchText) || catName.includes(searchText);
+                });
+            }
+
+            // Date range filter
+            const dateStart = document.getElementById('filter-date-start')?.value;
+            const dateEnd = document.getElementById('filter-date-end')?.value;
+
+            if (dateStart) {
+                trxs = trxs.filter(t => new Date(t.date) >= new Date(dateStart));
+            }
+            if (dateEnd) {
+                trxs = trxs.filter(t => new Date(t.date) <= new Date(dateEnd));
+            }
+
+            // Category dropdown filter
+            const fCat = document.getElementById('filter-category')?.value;
+            if (fCat && fCat !== 'all') {
+                trxs = trxs.filter(t => t.category === fCat);
+            }
+
+            // Account filter
+            const fAcc = document.getElementById('filter-account')?.value;
+            if (fAcc && fAcc !== 'all') {
+                trxs = trxs.filter(t => t.accountId === fAcc);
+            }
+
+            return trxs;
         },
 
         updateAll() {
@@ -1450,6 +1495,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- CHARTS (GRAFICI) RENDERING ---
         renderCharts() {
+            if (typeof this.getFilteredTransactions !== 'function') {
+                console.warn("getFilteredTransactions not available yet.");
+                return;
+            }
             const trxs = this.getFilteredTransactions().filter(t => t.type !== 'transfer');
             this.renderStats(trxs);
             this.renderTrendChart(trxs);
@@ -1744,10 +1793,104 @@ box-shadow: 0 20px 25px - 5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0;
                     .cleanup-row.selected .row-check { accent-color: #ef4444; }
                 </style>
 `;
-
             card.innerHTML = html;
             overlay.appendChild(card);
             document.body.appendChild(overlay);
+        },
+
+        // Render Category Report
+        renderCategoryReport() {
+            const container = document.getElementById('category-report-container');
+            if (!container) return;
+
+            const trxs = this.getFilteredTransactions();
+
+            // Group by category
+            const categoryTotals = {};
+            trxs.forEach(t => {
+                if (!t.category) return;
+                if (!categoryTotals[t.category]) {
+                    categoryTotals[t.category] = { income: 0, expense: 0 };
+                }
+                if (t.type === 'income') {
+                    categoryTotals[t.category].income += parseFloat(t.amount) || 0;
+                } else if (t.type === 'expense') {
+                    categoryTotals[t.category].expense += parseFloat(t.amount) || 0;
+                }
+            });
+
+            if (Object.keys(categoryTotals).length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 1.4rem; padding: 10px;">Nessun dato</p>';
+                return;
+            }
+
+            const html = Object.entries(categoryTotals)
+                .sort((a, b) => (b[1].expense + b[1].income) - (a[1].expense + a[1].income))
+                .map(([catId, totals]) => {
+                    const cat = Store.data.categories.find(c => c.id === catId);
+                    const catName = cat ? cat.name : 'Sconosciuta';
+                    const catIcon = cat ? cat.icon : 'fa-tag';
+                    const catColor = cat ? cat.color : '#666';
+
+                    const total = totals.income - totals.expense;
+                    const isPositive = total >= 0;
+
+                    return `
+    <div class="report-item">
+                        <div class="report-item-name">
+                            <i class="fas ${catIcon}" style="color: ${catColor};"></i>
+                            ${catName}
+                        </div>
+                        <div class="report-item-amount ${isPositive ? 'income' : 'expense'}">
+                            ${isPositive ? '+' : ''}${this.formatCurrency(total)}
+                        </div>
+                    </div>
+    `;
+                }).join('');
+
+            container.innerHTML = html;
+        },
+
+        // Implement CSV Export
+        exportToCSV() {
+            const trxs = this.getFilteredTransactions();
+            if (!trxs || trxs.length === 0) {
+                alert("Nessun movimento da esportare con i filtri attuali.");
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Data;Tipo;Categoria;Conto;Importo;Note\n"; // Using semicolon for Excel compatibility in IT
+
+            // CSV Rows
+            trxs.forEach(t => {
+                const date = new Date(t.date).toLocaleDateString('it-IT');
+                const type = t.type === 'income' ? 'Entrata' : (t.type === 'expense' ? 'Uscita' : 'Trasferimento');
+
+                const cat = Store.data.categories.find(c => c.id === t.category);
+                const catName = cat ? cat.name : (t.type === 'transfer' ? 'Giroconto' : 'Altro');
+
+                const acc = Store.data.accounts.find(a => a.id === t.accountId);
+                const accName = acc ? acc.name : 'N/D';
+
+                const amountValue = parseFloat(t.amount) || 0;
+                const amount = this.formatCurrency(amountValue);
+                const note = (t.description || '').replace(/;/g, ' ').replace(/\n/g, ' ');
+
+                csvContent += `${date};${type};${catName};${accName};${amount};${note}\n`;
+            });
+
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const fileName = `movimenti_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+
+            link.click();
+            document.body.removeChild(link);
         }
     };
 
@@ -2472,102 +2615,6 @@ style="color:${item.color}; border-color:${item.icon === pickerState.icon ? item
 
     // ===== NEW FILTERS FUNCTIONALITY =====
 
-    // Render Category Report
-    UI.renderCategoryReport = function () {
-        const container = document.getElementById('category-report-container');
-        if (!container) return;
-
-        const trxs = UI.getFilteredTransactions();
-
-        // Group by category
-        const categoryTotals = {};
-        trxs.forEach(t => {
-            if (!t.category) return;
-            if (!categoryTotals[t.category]) {
-                categoryTotals[t.category] = { income: 0, expense: 0 };
-            }
-            if (t.type === 'income') {
-                categoryTotals[t.category].income += parseFloat(t.amount) || 0;
-            } else if (t.type === 'expense') {
-                categoryTotals[t.category].expense += parseFloat(t.amount) || 0;
-            }
-        });
-
-        if (Object.keys(categoryTotals).length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 1.4rem; padding: 10px;">Nessun dato</p>';
-            return;
-        }
-
-        const html = Object.entries(categoryTotals)
-            .sort((a, b) => (b[1].expense + b[1].income) - (a[1].expense + a[1].income))
-            .map(([catId, totals]) => {
-                const cat = Store.data.categories.find(c => c.id === catId);
-                const catName = cat ? cat.name : 'Sconosciuta';
-                const catIcon = cat ? cat.icon : 'fa-tag';
-                const catColor = cat ? cat.color : '#666';
-
-                const total = totals.income - totals.expense;
-                const isPositive = total >= 0;
-
-                return `
-    <div class="report-item">
-                        <div class="report-item-name">
-                            <i class="fas ${catIcon}" style="color: ${catColor};"></i>
-                            ${catName}
-                        </div>
-                        <div class="report-item-amount ${isPositive ? 'income' : 'expense'}">
-                            ${isPositive ? '+' : ''}${this.formatCurrency(total)}
-                        </div>
-                    </div>
-    `;
-            }).join('');
-
-        container.innerHTML = html;
-    };
-
-    // Get filtered transactions based on all filters
-    UI.getFilteredTransactions = function () {
-        let trxs = [...Store.data.transactions];
-
-        // Search text filter
-        const searchText = document.getElementById('filter-search')?.value.toLowerCase().trim();
-        if (searchText) {
-            trxs = trxs.filter(t => {
-                const desc = (t.description || '').toLowerCase();
-                const amt = t.amount.toString();
-                const cat = Store.data.categories.find(c => c.id === t.category);
-                const catName = cat ? cat.name.toLowerCase() : '';
-
-                return desc.includes(searchText) || amt.includes(searchText) || catName.includes(searchText);
-            });
-        }
-
-        // Date range filter
-        const dateStart = document.getElementById('filter-date-start')?.value;
-        const dateEnd = document.getElementById('filter-date-end')?.value;
-
-        if (dateStart) {
-            trxs = trxs.filter(t => new Date(t.date) >= new Date(dateStart));
-        }
-        if (dateEnd) {
-            trxs = trxs.filter(t => new Date(t.date) <= new Date(dateEnd));
-        }
-
-        // Category dropdown filter
-        const fCat = document.getElementById('filter-category')?.value;
-        if (fCat && fCat !== 'all') {
-            trxs = trxs.filter(t => t.category === fCat);
-        }
-
-        // Account filter
-        const fAcc = document.getElementById('filter-account')?.value;
-        if (fAcc && fAcc !== 'all') {
-            trxs = trxs.filter(t => t.accountId === fAcc);
-        }
-
-        return trxs;
-    };
-
     // Reset filters
     const resetBtn = document.getElementById('reset-filters-btn');
     if (resetBtn) {
@@ -2642,48 +2689,6 @@ style="color:${item.color}; border-color:${item.icon === pickerState.icon ? item
             document.getElementById('modal-category-report').classList.add('hidden');
         });
     }
-
-    // Implement CSV Export
-    UI.exportToCSV = function () {
-        const trxs = UI.getFilteredTransactions();
-        if (!trxs || trxs.length === 0) {
-            alert("Nessun movimento da esportare con i filtri attuali.");
-            return;
-        }
-
-        // CSV Header
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Data;Tipo;Categoria;Conto;Importo;Note\n"; // Using semicolon for Excel compatibility in IT
-
-        // CSV Rows
-        trxs.forEach(t => {
-            const date = new Date(t.date).toLocaleDateString('it-IT');
-            const type = t.type === 'income' ? 'Entrata' : (t.type === 'expense' ? 'Uscita' : 'Trasferimento');
-
-            const cat = Store.data.categories.find(c => c.id === t.category);
-            const catName = cat ? cat.name : (t.type === 'transfer' ? 'Giroconto' : 'Altro');
-
-            const acc = Store.data.accounts.find(a => a.id === t.accountId);
-            const accName = acc ? acc.name : 'N/D';
-
-            const amountValue = parseFloat(t.amount) || 0;
-            const amount = this.formatCurrency(amountValue);
-            const note = (t.description || '').replace(/;/g, ' ').replace(/\n/g, ' ');
-
-            csvContent += `${date};${type};${catName};${accName};${amount};${note}\n`;
-        });
-
-        // Create download link
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        const fileName = `movimenti_export_${new Date().toISOString().slice(0, 10)}.csv`;
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
-
-        link.click();
-        document.body.removeChild(link);
-    };
 
     // Event listener for CSV Export
     const exportBtn = document.getElementById('export-csv-btn');

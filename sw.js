@@ -1,11 +1,12 @@
-const CACHE_NAME = 'gestione-casa-v7';
+const CACHE_NAME = 'gestione-casa-v8';
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './main.js',
     './manifest.json',
-    './icon-192.png'
+    './icon-192.png',
+    './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {

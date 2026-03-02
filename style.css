@@ -426,7 +426,8 @@ body {
     }
 
     .filters-drawer-overlay.hidden {
-        display: none !important;
+        display: block !important;
+        opacity: 1 !important;
     }
 
     .filters-drawer-overlay .filters-sidebar {
@@ -1166,20 +1167,27 @@ body {
     border-right: 3px solid var(--primary-color);
 }
 
-.desktop-only {
+.desktop-only,
+.desktop-only-flex {
     display: none;
 }
 
-.mobile-only {
+.mobile-only,
+.mobile-only-flex {
     display: flex;
 }
 
 @media (min-width: 800px) {
     .desktop-only {
+        display: block;
+    }
+
+    .desktop-only-flex {
         display: flex;
     }
 
-    .bottom-nav.mobile-only {
+    .bottom-nav.mobile-only,
+    .mobile-only-flex {
         display: none;
     }
 

@@ -426,8 +426,7 @@ body {
     }
 
     .filters-drawer-overlay.hidden {
-        display: block !important;
-        opacity: 1 !important;
+        display: none !important;
     }
 
     .filters-drawer-overlay .filters-sidebar {
@@ -1169,26 +1168,26 @@ body {
 
 .desktop-only,
 .desktop-only-flex {
-    display: none;
+    display: none !important;
 }
 
 .mobile-only,
 .mobile-only-flex {
-    display: flex;
+    display: flex !important;
 }
 
 @media (min-width: 800px) {
     .desktop-only {
-        display: block;
+        display: block !important;
     }
 
     .desktop-only-flex {
-        display: flex;
+        display: flex !important;
     }
 
-    .bottom-nav.mobile-only,
+    .mobile-only,
     .mobile-only-flex {
-        display: none;
+        display: none !important;
     }
 
     body {

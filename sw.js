@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestione-casa-v8';
+const CACHE_NAME = 'gestione-casa-v9';
 const ASSETS = [
     './',
     './index.html',
